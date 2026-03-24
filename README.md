@@ -43,4 +43,4 @@ flowchart TD
         Internet -. SSH .-> WebEC2
         WebEC2 -. SSH .-> DBEC2
     end
-    ```
+```
