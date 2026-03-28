@@ -40,50 +40,61 @@ If you're working in a personal or shared AWS account, it’s strongly recommend
 https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html
 
 ## Architecture
+- Compute (EC2s) in green rounded boxes.
+- Network gateways (IGW, NAT) in blue pill shapes.
+- Routing logic (route tables) in yellow rectangles.
 
 ```mermaid
-flowchart TD
-    Internet[Internet]
+flowchart LR
 
-    subgraph VPC[VPC 10.0.0.0/16]
-        IGW[Internet Gateway]
+    %% Nodes
+    Internet((Internet))
 
-        subgraph AZ1[Availability Zone 1]
-            PublicA[Public Subnet AZ1]
-            PrivateA[Private Subnet AZ1]
-            NAT[NAT Gateway]
-            WebEC2[Web Server EC2]
+    subgraph VPC["VPC 10.0.0.0/16"]
+
+        IGW(("Internet Gateway"))
+        PubRT["Public Route Table<br/>0.0.0.0/0 → IGW"]
+        PrivRT["Private Route Table<br/>0.0.0.0/0 → NAT Gateway"]
+
+        subgraph AZ1["Availability Zone 1"]
+
+            %% Public subnet with Web Server and NAT
+            subgraph Pub1["Public Subnet (10.0.1.0/24)"]
+                Web(["Web Server EC2<br/>Public IP / SSH Accessible"])
+                NAT(("NAT Gateway<br/>(Elastic IP)"))
+            end
+
+            %% Private subnet with DB
+            subgraph Priv1["Private Subnet (10.0.2.0/24)"]
+                DB(["DB EC2<br/>Private IP<br/>SSH via Web Server"])
+            end
         end
-
-        subgraph AZ2[Availability Zone 2]
-            PublicB[Public Subnet AZ2]
-            PrivateB[Private Subnet AZ2]
-            DBEC2["DB EC2 (MariaDB)"]
-        end
-
-        PubRT[Public Route Table]
-        PrivRT[Private Route Table]
-
-        Internet --> IGW
-
-        IGW --> PubRT
-        PubRT --> PublicA
-        PubRT --> PublicB
-
-        PublicA --> NAT
-        PublicA --> WebEC2
-
-        PrivateA --> PrivRT
-        PrivateB --> PrivRT
-        PrivRT --> NAT
-
-        PrivateB --> DBEC2
-
-        Internet -. HTTP/HTTPS .-> WebEC2
-        Internet -. SSH .-> WebEC2
-        WebEC2 -. SSH .-> DBEC2
-        WebEC2 -. MySQL 3306 .-> DBEC2
     end
+
+    %% Routing relationships
+    Internet -->|"Inbound SSH (22), HTTP/HTTPS"| IGW
+    IGW -->|"0.0.0.0/0"| PubRT
+    PubRT -->|Routes| Pub1
+    PrivRT -->|Routes| Priv1
+    PrivRT -->|"Default Route → NAT"| NAT
+    NAT -->|"Outbound via IGW"| IGW
+
+    %% SSH and application flows
+    Internet -. "SSH (22)" .-> Web
+    Web -. "SSH -A (22)" .-> DB
+    Priv1 -. "Outbound only via NAT" .-> NAT
+
+    %% Styles: color and shape coding
+    style Internet fill:#e0e0e0,stroke:#333,stroke-width:1px
+    style IGW fill:#b3cde0,stroke:#03396c,stroke-width:2px
+    style NAT fill:#b3cde0,stroke:#03396c,stroke-width:2px
+    style PubRT fill:#fff2cc,stroke:#ffb300,stroke-width:2px
+    style PrivRT fill:#fff2cc,stroke:#ffb300,stroke-width:2px
+    style Web fill:#d5f5e3,stroke:#196f3d,stroke-width:2px
+    style DB fill:#d5f5e3,stroke:#196f3d,stroke-width:2px
+    style VPC fill:#fafafa,stroke:#888,stroke-width:1px
+    style Pub1 fill:#f0f8ff,stroke:#999,stroke-width:1px
+    style Priv1 fill:#f0f8ff,stroke:#999,stroke-width:1px
 ```
 
 ## Production Considerations
