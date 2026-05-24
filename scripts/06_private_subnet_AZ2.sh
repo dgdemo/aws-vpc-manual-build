@@ -5,14 +5,14 @@ set -euo pipefail
 source lib.sh
 [ -f session.env ] && source session.env
 
-PUBLIC_SUBNET_AZ2=$(aws ec2 create-subnet \
+PRIVATE_SUBNET_AZ2=$(aws ec2 create-subnet \
   --vpc-id "$VPC_ID" \
-  --cidr-block 10.0.1.0/24 \
+  --cidr-block 10.0.3.0/24 \
   --availability-zone us-east-1b \
-  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=Public-Subnet-AZ2}]' \
+  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=Private-Subnet-AZ2}]' \
   --query 'Subnet.SubnetId' \
   --output text)
 
-save_var "PUBLIC_SUBNET_AZ2" "$PUBLIC_SUBNET_AZ2"
-
-echo "Created Public Subnet (AZ2): $PUBLIC_SUBNET_AZ2"
+ save_var "PRIVATE_SUBNET_AZ2" "$PRIVATE_SUBNET_AZ2"
+ 
+ echo "Created Private Subnet (AZ2): $PRIVATE_SUBNET_AZ2"

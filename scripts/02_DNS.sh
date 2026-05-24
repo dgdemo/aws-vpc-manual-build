@@ -8,11 +8,11 @@ source lib.sh
 echo "Enabling DNS support and hostnames for VPC: $VPC_ID"
 
 aws ec2 modify-vpc-attribute \
---vpc-id $VPC_ID \
+--vpc-id "$VPC_ID" \
 --enable-dns-support
 
 aws ec2 modify-vpc-attribute \
---vpc-id $VPC_ID \
+--vpc-id "$VPC_ID" \
 --enable-dns-hostnames
 
 echo "DNS support and hostnames enabled for VPC: $VPC_ID"
